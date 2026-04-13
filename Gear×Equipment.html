@@ -1,0 +1,2815 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Gear Set Generator</title>
+<style>
+  :root{
+    --bg:#0b0f14;
+    --panel:#111826;
+    --panel2:#0f1622;
+    --muted:#9fb0c5;
+    --text:#e7eef7;
+    --border:#223047;
+    --primary:#4aa3ff;
+    --danger:#ff5b5b;
+    --ok:#26d07c;
+    --chip:#1b2638;
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+    --radius:14px;
+    --radius2:10px;
+    --mono: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas, "Liberation Mono","Courier New",monospace;
+    --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background: radial-gradient(1200px 700px at 20% 0%, rgba(74,163,255,.08), transparent 60%),
+                radial-gradient(900px 500px at 80% 10%, rgba(38,208,124,.07), transparent 65%),
+                var(--bg);
+    color:var(--text);
+    font-family:var(--font);
+    line-height:1.35;
+  }
+  a{color:inherit}
+  .app{
+    max-width:1200px;
+    margin:0 auto;
+    padding:18px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    padding:14px 16px;
+    background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0));
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow: var(--shadow);
+  }
+  header h1{
+    font-size:16px;
+    margin:0;
+    font-weight:750;
+    letter-spacing:.2px;
+  }
+  header .right{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;
+  }
+  .seg{
+    display:flex;
+    border:1px solid var(--border);
+    border-radius:999px;
+    overflow:hidden;
+    background:rgba(255,255,255,.02);
+  }
+  .seg button{
+    border:0; background:transparent; color:var(--muted);
+    padding:9px 12px; cursor:pointer; font-weight:650;
+  }
+  .seg button.active{
+    background:rgba(74,163,255,.16);
+    color:var(--text);
+  }
+  .btn{
+    border:1px solid var(--border);
+    background:rgba(255,255,255,.02);
+    color:var(--text);
+    padding:10px 12px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:650;
+    box-shadow: 0 0 0 rgba(0,0,0,0);
+    transition:.15s;
+    white-space:nowrap;
+  }
+  .btn:hover{transform: translateY(-1px); box-shadow:0 10px 20px rgba(0,0,0,.18)}
+  .btn.primary{
+    background:rgba(74,163,255,.2);
+    border-color: rgba(74,163,255,.35);
+  }
+  .btn.danger{
+    background:rgba(255,91,91,.12);
+    border-color: rgba(255,91,91,.35);
+  }
+  .btn:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+    transform:none;
+    box-shadow:none;
+  }
+  .iconBtn{
+    border:1px solid var(--border);
+    background:rgba(255,255,255,.02);
+    color:var(--text);
+    width:36px; height:36px;
+    border-radius:12px;
+    cursor:pointer;
+    display:grid;
+    place-items:center;
+    font-size:15px;
+    transition:.15s;
+  }
+  .iconBtn:hover{transform: translateY(-1px)}
+  .iconBtn.danger{border-color: rgba(255,91,91,.5); background:rgba(255,91,91,.1)}
+  .layout{
+    display:grid;
+    grid-template-columns: 1.15fr .85fr;
+    gap:14px;
+    align-items:start;
+  }
+  @media (max-width: 980px){
+    .layout{grid-template-columns:1fr}
+  }
+  section.panel{
+    background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0));
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow: var(--shadow);
+    overflow:hidden;
+  }
+  .panelHeader{
+    padding:14px 16px;
+    border-bottom:1px solid rgba(255,255,255,.06);
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .panelHeader .title{
+    display:flex; gap:10px; align-items:baseline; flex-wrap:wrap;
+  }
+  .panelHeader h2{
+    font-size:14px;
+    margin:0;
+    font-weight:800;
+  }
+  .panelHeader .sub{
+    color:var(--muted);
+    font-size:12px;
+  }
+  .panelBody{padding:14px 16px}
+  .divider{height:1px; background:rgba(255,255,255,.06); margin:12px 0}
+  .hint{color:var(--muted); font-size:12px}
+  .mono{font-family:var(--mono)}
+  .formGrid{
+    display:flex; flex-wrap:wrap; gap:10px;
+  }
+  .field{display:flex; flex-direction:column; gap:6px}
+  .field.w12{flex: 1 1 100%}
+  .field.w6{flex: 1 1 calc(50% - 10px)}
+  .field.w4{flex: 1 1 calc(33.333% - 10px)}
+  .field.w3{flex: 1 1 calc(25% - 10px)}
+  .label{
+    display:flex; align-items:flex-end; justify-content:space-between; gap:10px;
+    font-size:12px; color:var(--muted);
+  }
+  .control input, .control select, textarea{
+    width:100%;
+    border:1px solid var(--border);
+    background: rgba(0,0,0,.15);
+    color:var(--text);
+    padding:10px 11px;
+    border-radius:12px;
+    outline:none;
+    font-size:13px;
+  }
+  textarea{min-height:74px; resize:vertical}
+  .row{
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  }
+  .toggle{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 12px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:rgba(255,255,255,.02);
+    min-height: 38px;
+  }
+  .switch{
+    width:42px; height:22px;
+    border:1px solid rgba(255,255,255,.1);
+    background:rgba(0,0,0,.18);
+    border-radius:999px;
+    position:relative;
+    cursor:pointer;
+    flex:0 0 auto;
+  }
+  .switch::after{
+    content:"";
+    position:absolute; top:3px; left:3px;
+    width:16px; height:16px;
+    border-radius:999px;
+    background:rgba(255,255,255,.75);
+    transition:.15s;
+  }
+  .switch.on{
+    background:rgba(38,208,124,.18);
+    border-color: rgba(38,208,124,.3);
+  }
+  .switch.on::after{left:23px; background: rgba(38,208,124,.95)}
+  .tag{
+    display:inline-flex;
+    gap:6px;
+    align-items:center;
+    padding:6px 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.06);
+    color:var(--muted);
+    font-size:12px;
+  }
+  .tag.ok{border-color: rgba(38,208,124,.35); background: rgba(38,208,124,.10); color: #bff3d6;}
+  .tag.warn{border-color: rgba(255,180,60,.35); background: rgba(255,180,60,.10); color: #ffe2b8;}
+  .tag.bad{border-color: rgba(255,91,91,.35); background: rgba(255,91,91,.10); color: #ffd0d0;}
+  .list{display:flex; flex-direction:column; gap:10px}
+  details{
+    background:rgba(255,255,255,.02);
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:14px;
+    overflow:hidden;
+  }
+  summary{
+    list-style:none;
+    cursor:pointer;
+    padding:12px 12px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  summary::-webkit-details-marker{display:none}
+  .slotGroupTitle{
+    display:flex; flex-direction:column; gap:3px;
+  }
+  .slotGroupTitle span{color:var(--muted); font-size:12px}
+  .slotGroupBody{
+    padding:12px;
+    border-top:1px solid rgba(255,255,255,.06);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 10px;
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:12px;
+    background:rgba(0,0,0,.12);
+  }
+  .item.frozen{
+    border-color: rgba(74,163,255,.35);
+    background: rgba(74,163,255,.08);
+  }
+  .itemName{
+    display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;
+    font-size:13px;
+  }
+  .itemName span{color:var(--muted); font-size:12px}
+  .itemStats{margin-top:6px}
+  .itemBtns{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .chipRow{
+    display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+  }
+  .result summary{
+    align-items:flex-start;
+    position:relative;
+  }
+  .sumLeft{display:flex; flex-direction:column; gap:6px}
+  .sumTitle{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+    padding-right:44px;
+  }
+  .sumTitle strong{font-size:13px}
+  .sumLine{color:var(--muted); font-size:12px}
+  .resultBody{
+    border-top:1px solid rgba(255,255,255,.06);
+    padding:12px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .kv{
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:14px;
+    background:rgba(0,0,0,.12);
+    padding:10px 12px;
+  }
+  .kv h4{margin:0 0 10px 0; font-size:13px}
+  .slotsGrid{
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap:10px;
+  }
+  @media (max-width: 680px){
+    .slotsGrid{grid-template-columns:1fr}
+  }
+  .slot{
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:12px;
+    background:rgba(255,255,255,.02);
+    padding:10px 10px;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .slot .t{color:var(--muted); font-size:12px}
+  .slot .n{font-size:13px; font-weight:750}
+  .slot .s{margin-top:2px}
+  .modalBackdrop{
+    position:fixed;
+    inset:0;
+    background: rgba(0,0,0,.6);
+    display:none;
+    place-items:center;
+    padding:16px;
+    z-index:30;
+  }
+  .modalBackdrop.show{display:grid}
+  .modal{
+    width: min(680px, 100%);
+    background: var(--panel);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    overflow:hidden;
+  }
+  .modalHeader{
+    padding:12px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .modalBody{padding:14px}
+  .modalFooter{
+    padding:12px 14px;
+    border-top:1px solid rgba(255,255,255,.08);
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>🧩 Генератор сетов</h1>
+        <div class="hint">Сохраняет состояние в LocalStorage • Режимы: герой/питомец/руны • Заморозка фиксирует предмет в слоте</div>
+      </div>
+
+      <div class="right">
+        <div class="seg" role="tablist" aria-label="Режим">
+          <button id="segHero" class="active" type="button">🧙 Герой</button>
+          <button id="segPet" type="button">🐾 Питомец</button>
+          <button id="segRunes" type="button">🔮 Руны</button>
+        </div>
+        <button class="btn" id="btnSettings">⚙️ Настройки</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="panel">
+        <div class="panelHeader">
+          <!-- 2. title moved to left, info chips to right -->
+          <div class="title">
+            <h2 id="gearTitle"></h2>
+            <span class="sub" id="editHint"></span>
+          </div>
+          <div class="chipRow">
+            <span class="tag">📦 Предметов: <span class="mono" id="itemsCount">0</span></span>
+            <span class="tag">❄️ Заморожено: <span class="mono" id="frozenCount">0</span></span>
+          </div>
+        </div>
+
+        <div class="panelBody">
+          <div class="formGrid">
+            <div class="field w6">
+              <div class="label">
+                <span>⚡ Слот</span>
+                <span class="hint" id="slotHint"></span>
+              </div>
+              <div class="control">
+                <select id="inSlot"></select>
+              </div>
+            </div>
+
+            <div class="field w6">
+              <div class="label">
+                <span>🆔 Название предмета</span>
+                <span class="hint"></span>
+              </div>
+              <div class="control">
+                <input id="inName" type="text" placeholder="Например: Меч ярости" />
+              </div>
+            </div>
+
+            <div class="field w12" id="statsFields"></div>
+
+            <div class="field w12">
+              <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center">
+                <button class="btn primary" id="btnAddUpdate" style="flex:1 1 0" disabled>➕ Добавить</button>
+                <button class="btn danger" id="btnCancelEdit" style="flex:1 1 0; display:none" disabled>❌ Отмена</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="list" id="itemsList"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panelHeader">
+          <div class="title">
+            <h2>📊 Результаты</h2>
+            <span class="sub"></span>
+          </div>
+          <div class="chipRow">
+            <span class="tag">🧬 Комбинаций: <span class="mono" id="comboCountInline">0</span></span>
+            <span class="tag" id="genStatusTag" style="display:none"></span>
+          </div>
+        </div>
+
+        <div class="panelBody">
+          <div class="formGrid">
+            <!-- SORT and TOP on same row; ORDER under sort -->
+            <div class="field w6">
+              <div class="label">
+                <span>⬇️ Сортировать по</span>
+                <span class="hint" id="sortHint"></span>
+              </div>
+              <div class="control">
+                <select id="inSort"></select>
+              </div>
+            </div>
+
+            <div class="field w6">
+              <div class="label">
+                <span>🏆 Показать Топ</span>
+                <span class="hint"></span>
+              </div>
+              <div class="control">
+                <input id="inTop" type="number" min="0" step="1" value="50" />
+              </div>
+            </div>
+
+            <!-- ORDER moved under SORT -->
+            <div class="field w6">
+              <div class="label">
+                <span>↕️ Порядок сортировки</span>
+                <span class="hint"></span>
+              </div>
+              <div class="control">
+                <select id="inSortOrder">
+                  <option value="desc">По убыванию</option>
+                  <option value="asc">По возрастанию</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field w6" id="fieldSortIntegers">
+              <div class="label">
+                <span>💯 Только целые значения</span>
+                <span class="hint"></span>
+              </div>
+              <div class="toggle">
+                <span class="hint">Выкл. / Вкл.</span>
+                <div class="switch" id="swSortIntegers" title="Фильтровать по текущей сортировке только целые значения" role="switch" aria-checked="false"></div>
+              </div>
+            </div>
+
+            <div class="field w12" id="fieldRangeBox">
+              <div class="label">
+                <span>📏 Диапазон (по текущей сортировке)</span>
+                <span class="hint">Оставьте пустым, если не нужен</span>
+              </div>
+              <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+                <div style="flex:1 1 180px;">
+                  <div class="control">
+                    <input id="inRangeFrom" type="text" inputmode="decimal" placeholder="От" />
+                  </div>
+                </div>
+                <div style="flex:1 1 180px;">
+                  <div class="control">
+                    <input id="inRangeTo" type="text" inputmode="decimal" placeholder="До" />
+                  </div>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:nowrap; width:100%;">
+                  <button class="btn" id="btnApplyRange" style="flex:1 1 0" disabled>✅ Применить</button>
+                  <button class="btn" id="btnResetRange" style="flex:1 1 0" disabled>❌ Сбросить</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="field w12"><div class="divider"></div></div>
+
+            <div class="field w12" id="fieldActionBtns">
+              <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:8px;">
+                <button class="btn primary" id="btnGenerateStop">🚀 Генерировать Сеты</button>
+                <button class="btn" id="btnExpandCollapse" disabled>📂 Развернуть всё</button>
+
+                <button class="btn" id="btnClearResults" disabled>🗑️ Очистить результаты</button>
+                <button class="btn" id="btnResetDefault">🔄 Сбросить к дефолту</button>
+
+                <button class="btn" id="btnExport">📤 Экспорт конфига</button>
+                <label class="btn" for="fileImport" style="cursor:pointer">📥 Импорт конфига</label>
+                <input id="fileImport" type="file" accept="application/json" hidden />
+              </div>
+            </div>
+
+            <div class="field w12" id="fieldPager" style="display:none">
+              <div class="toggle" style="gap:12px; align-items:center">
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                  <div style="font-weight:800; font-size:13px;">📄 Пагинация результатов</div>
+                  <div class="hint" id="pagerHint"></div>
+                </div>
+                <div class="row" style="justify-content:flex-end; margin-left:auto">
+                  <button class="btn" id="btnPrevPage">◀</button>
+                  <button class="btn" id="btnNextPage">▶</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="list" id="resultsList"></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="modalBackdrop" id="settingsBackdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Настройки">
+        <div class="modalHeader">
+          <strong>⚙️ Настройки</strong>
+          <button class="iconBtn" id="btnCloseSettings" title="Закрыть">✖</button>
+        </div>
+        <div class="modalBody">
+          <div class="formGrid">
+            <div class="field w6">
+              <div class="label">
+                <span>❤️ Базовое здоровье героя (Base HP)</span>
+                <span class="hint"></span>
+              </div>
+              <div class="control">
+                <input id="inBaseHp" type="number" min="0" step="1" value="15725" />
+              </div>
+            </div>
+
+            <div class="field w6">
+              <div class="label">
+                <span>🧱 Max Block (%)</span>
+                <span class="hint">0 = без ограничения</span>
+              </div>
+              <div class="control">
+                <input id="inMaxBlock" type="number" min="0" step="0.1" value="0" />
+              </div>
+            </div>
+
+            <div class="field w6">
+              <div class="label">
+                <span>🛡️ Max DMG Reduction (%)</span>
+                <span class="hint">0 = без ограничения</span>
+              </div>
+              <div class="control">
+                <input id="inMaxDmgRed" type="number" min="0" step="0.1" value="0" />
+              </div>
+            </div>
+
+            <div class="field w6">
+              <div class="label">
+                <span>🔷 Max Mana Cost (%)</span>
+                <span class="hint">0 = без ограничения</span>
+              </div>
+              <div class="control">
+                <input id="inMaxManaCost" type="number" min="0" step="0.1" value="0" />
+              </div>
+            </div>
+
+            <div class="field w12">
+              <div class="hint">
+                Примечание: ❄️ замороженный предмет фиксируется для своего слота и считается единственным вариантом для этого слота.<br>
+                Для режима «Руны» генерация использует 18 позиций; руны с одинаковыми параметрами допускаются (важно: уникальные id).
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modalFooter">
+          <button class="btn primary" id="btnSaveSettings">Сохранить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const HERO_SLOTS = ["🗡️ Меч","🛡️ Щит","🪽 Крылья","📿 Ожерелье","🪖 Шлем","🥋 Броня","🥾 Сапоги","🐾 Питомец"];
+    const PET_SLOTS  = ["🎩 Шляпа","🕶️ Очки","🪽 Крылья","📿 Ожерелье","🪝 Серьги","🤿 Маска","🫎 Рога","🥾 Ботинки"];
+    // Rune slot types used when creating runes (their "type"), but generation will use 18 positions
+    const RUNE_SLOT_TYPES = ["🩸 Blood", "🌵 Thorn", "🪓 Reaper", "✨ Arcane"];
+
+    const HERO_STATS = [
+      { key:"hp", label:"💚 HP" },
+      { key:"atk", label:"⚔️ Attack" },
+      { key:"ref", label:"🛡️ Reflect" },
+      { key:"critRate", label:"🎯 CRIT Rate" },
+      { key:"ls", label:"🩸 Life-steal" },
+      { key:"critDmg", label:"💥 CRIT DMG" },
+    ];
+
+    const PET_STATS = [
+      { key:"block", label:"🧱 Block" },
+      { key:"dmgRed", label:"🛡️ DMG Reduction" },
+      { key:"dmgInc", label:"⚡ DMG Increase" },
+      { key:"pierce", label:"🗡️ Pierce" },
+    ];
+
+    const RUNE_STATS = [
+      { key:"exceedHp", label:"💚 Exceed HP" },
+      { key:"trueDmg", label:"🗡️ True Damage" },
+      { key:"manaBurn", label:"🔥 Mana Burn" },
+      { key:"manaCost", label:"🔷 Mana Cost" },
+      { key:"manaDrain", label:"🧿 Mana Drain" },
+      { key:"maxBloodShield", label:"🩸 Max Blood Shield" },
+    ];
+
+    const DEFAULT_STATE = () => ({
+      version: 2,
+      theme: "dark",
+      mode: "hero",
+      settings: {
+        baseHp: 15725,
+        maxBlock: 0,
+        maxDmgRed: 0,
+        maxManaCost: 0,
+        sortIntegers: false,
+        sortOrder: "desc"
+      },
+      gear: { hero: [], pet: [], runes: [] },
+      savedConfigs: [],
+      nextAlphaId: { hero: 0, pet: 0, runes: 0 }
+    });
+
+    let state = DEFAULT_STATE();
+
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
+
+    function deepClone(obj){ return JSON.parse(JSON.stringify(obj)); }
+
+    const SCALE = 1000; // fixed-point: 3 знака
+    function normalizeNumber(v){
+      if (v === "" || v === null || v === undefined) return 0;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    }
+    function toFixedInt(num){
+      const n = normalizeNumber(num);
+      return Math.round((n + Number.EPSILON) * SCALE);
+    }
+    function fromFixedInt(intVal){
+      return normalizeNumber(intVal) / SCALE;
+    }
+    function formatPercentNumber(n){
+      if (!Number.isFinite(n)) return 0;
+      const rounded = Math.round((n + Number.EPSILON) * 1000) / 1000;
+      if (Object.is(rounded, -0)) return 0;
+      return rounded;
+    }
+
+    function alphaIdFromIndex(i){
+      let n = i, s = "";
+      while (true){
+        s = String.fromCharCode(65 + (n % 26)) + s;
+        n = Math.floor(n / 26) - 1;
+        if (n < 0) break;
+      }
+      return s;
+    }
+
+    function ensureNextAlpha(){
+      state.nextAlphaId ??= { hero: 0, pet: 0, runes: 0 };
+      state.nextAlphaId.hero ??= 0;
+      state.nextAlphaId.pet ??= 0;
+      state.nextAlphaId.runes ??= 0;
+    }
+
+    function currentSlots(){ 
+      if (state.mode === "hero") return HERO_SLOTS; 
+      if (state.mode === "pet") return PET_SLOTS;
+      return RUNE_SLOT_TYPES;
+    }
+    function currentStats(){ 
+      if (state.mode === "hero") return HERO_STATS; 
+      if (state.mode === "pet") return PET_STATS;
+      return RUNE_STATS;
+    }
+    function currentGear(){ 
+      if (state.mode === "hero") return state.gear.hero; 
+      if (state.mode === "pet") return state.gear.pet;
+      return state.gear.runes;
+    }
+
+    function allocateAlphaIdForModeSlot(mode, slot){
+      const used = new Set();
+      const gear = (mode === "hero") ? (state.gear.hero || []) : (mode === "pet") ? (state.gear.pet || []) : (state.gear.runes || []);
+      for (const it of gear){
+        if (it?.slot === slot && it?.id) used.add(String(it.id));
+      }
+      for (let i = 0; i < 26; i++){
+        const letter = String.fromCharCode(65 + i);
+        if (!used.has(letter)) return letter;
+      }
+      ensureNextAlpha();
+      const idx = state.nextAlphaId[mode] ?? 0;
+      state.nextAlphaId[mode] = (state.nextAlphaId[mode] || 0) + 1;
+      return alphaIdFromIndex(idx);
+    }
+
+    function allocateAlphaId(slot){
+      return allocateAlphaIdForModeSlot(state.mode, slot);
+    }
+
+    function persist(){
+      try{
+        localStorage.setItem("gearGen.state", JSON.stringify(state));
+      }catch(e){
+        alert("Ошибка сохранения (LocalStorage переполнен или недоступен).");
+      }
+    }
+
+    function migrateState(parsed){
+      if (!parsed || typeof parsed !== "object") return parsed;
+      const v = normalizeNumber(parsed.version ?? 1);
+      if (v >= 2) return parsed;
+      parsed.version = 2;
+      parsed.nextAlphaId ??= { hero: 0, pet: 0, runes: 0 };
+      return parsed;
+    }
+
+    function load(){
+      const raw = localStorage.getItem("gearGen.state");
+      if (!raw) return;
+      try{
+        const parsed0 = JSON.parse(raw);
+        const parsed = migrateState(parsed0);
+        if (parsed && parsed.settings && parsed.gear) state = parsed;
+        state.settings ??= {};
+        state.settings.baseHp ??= 15725;
+        state.settings.maxBlock ??= 0;
+        state.settings.maxDmgRed ??= 0;
+        state.settings.maxManaCost ??= 0;
+        state.settings.sortIntegers ??= false;
+        state.settings.sortOrder ??= "desc";
+        state.savedConfigs ??= [];
+        state.nextAlphaId ??= { hero: 0, pet: 0, runes: 0 };
+        state.nextAlphaId.hero ??= 0;
+        state.nextAlphaId.pet ??= 0;
+        state.nextAlphaId.runes ??= 0;
+        state.gear.hero ??= [];
+        state.gear.pet ??= [];
+        state.gear.runes ??= [];
+      }catch(e){}
+    }
+
+    function formatStatsLine(stats, statDefs){
+      const parts = [];
+      for (const def of statDefs){
+        const v = formatPercentNumber(normalizeNumber(stats?.[def.key] ?? 0));
+        if (v !== 0) parts.push(`${def.label}: ${v}%`);
+      }
+      return parts.length ? parts.join(" • ") : "—";
+    }
+
+    function activeSortKeys(){
+      const gear = currentGear();
+      const defs = currentStats();
+      const enabled = [];
+      for (const d of defs){
+        let ok = false;
+        for (const it of gear){
+          const v = normalizeNumber(it.stats?.[d.key] ?? 0);
+          if (v !== 0){ ok = true; break; }
+        }
+        if (ok) enabled.push(d.key);
+      }
+      return enabled;
+    }
+
+    // buildVariantsPerSlot adjusted: runes -> single pool used for 18 positions
+    function buildVariantsPerSlot(){
+      const gear = currentGear();
+      if (state.mode !== "runes"){
+        const slots = currentSlots();
+        const out = [];
+        for (const slot of slots){
+          out.push(gear.filter(x=>x.slot===slot));
+        }
+        return out;
+      } else {
+        // Runes: single pool of runes; generation uses 18 positions, each draws from entire pool but, after change, generation treats them as combinations
+        const variants = [];
+        const runesList = gear.slice(); // all runes
+        for (let i=0;i<18;i++) variants.push(runesList);
+        return variants;
+      }
+    }
+
+    function nCr(n, r){
+      if (r < 0 || r > n) return 0;
+      r = Math.min(r, n - r);
+      let num = 1;
+      for (let i = 1; i <= r; i++){
+        num = num * (n - r + i) / i;
+        if (!Number.isFinite(num)) return Infinity;
+      }
+      return Math.round(num);
+    }
+
+    // New: precise counting with "only integers" option
+    function countPossibleCombos(){
+      const variants = buildVariantsPerSlot();
+      if (variants.some(v => v.length === 0)) return 0;
+      if (state.mode !== "runes"){
+        if (!state.settings.sortIntegers) {
+          let prod = 1;
+          for (const v of variants) prod *= v.length;
+          return prod;
+        } else {
+          const defs = currentStats();
+          const sortKey = $("#inSort")?.value || defs[0].key;
+          const sortIdx = defs.findIndex(d=>d.key===sortKey);
+          if (sortIdx < 0) {
+            let prod = 1;
+            for (const v of variants) prod *= v.length;
+            return prod;
+          }
+          const mod = SCALE;
+          let dp = new Uint32Array(mod);
+          dp[0] = 1;
+          for (const slotArr of variants){
+            const cntByRem = new Uint32Array(mod);
+            for (const it of slotArr){
+              const rem = ((it.statsVecI?.[sortIdx] | 0) % mod + mod) % mod;
+              cntByRem[rem] = (cntByRem[rem] + 1) >>> 0;
+            }
+            const ndp = new Uint32Array(mod);
+            for (let a=0;a<mod;a++){
+              const ca = dp[a];
+              if (!ca) continue;
+              for (let r=0;r<mod;r++){
+                const c = cntByRem[r];
+                if (!c) continue;
+                const idx = (a + r) % mod;
+                const add = ca * c;
+                const sum = ndp[idx] + add;
+                if (!Number.isSafeInteger(sum)) return Number.POSITIVE_INFINITY;
+                ndp[idx] = sum;
+              }
+            }
+            dp = ndp;
+          }
+          return dp[0];
+        }
+      } else {
+        const pool = variants[0];
+        const n = pool.length;
+        const k = 18;
+        if (n < k) return 0;
+        if (!state.settings.sortIntegers){
+          return nCr(n, k);
+        } else {
+          const defs = currentStats();
+          const sortKey = $("#inSort")?.value || defs[0].key;
+          const sortIdx = defs.findIndex(d=>d.key===sortKey);
+          if (sortIdx < 0) return nCr(n,k);
+
+          const residues = pool.map(it => ((it.statsVecI?.[sortIdx] | 0) % SCALE + SCALE) % SCALE);
+          const maxC = k;
+          const dp = [];
+          for (let c=0;c<=maxC;c++) dp.push(new Uint32Array(SCALE));
+          dp[0][0] = 1;
+          for (let i=0;i<n;i++){
+            const rem = residues[i];
+            for (let c=maxC-1;c>=0;c--){
+              const src = dp[c];
+              const dst = dp[c+1];
+              for (let r=0;r<SCALE;r++){
+                const val = src[r];
+                if (!val) continue;
+                const nr = (r + rem) % SCALE;
+                const sum = dst[nr] + val;
+                if (!Number.isSafeInteger(sum)) return Number.POSITIVE_INFINITY;
+                dst[nr] = sum;
+              }
+            }
+          }
+          return dp[k][0];
+        }
+      }
+    }
+
+    function buildStatsVecI(statsObj, defs){
+      const v = new Int32Array(defs.length);
+      for (let i=0;i<defs.length;i++){
+        const key = defs[i].key;
+        v[i] = toFixedInt(statsObj?.[key] ?? 0);
+      }
+      return v;
+    }
+
+    function enforceInvariantsForMode(mode){
+      const slots = (mode === "hero") ? HERO_SLOTS : (mode === "pet") ? PET_SLOTS : RUNE_SLOT_TYPES;
+      const defs  = (mode === "hero") ? HERO_STATS : (mode === "pet") ? PET_STATS : RUNE_STATS;
+      const gear = (mode === "hero") ? (state.gear.hero ||= []) : (mode === "pet") ? (state.gear.pet ||= []) : (state.gear.runes ||= []);
+
+      const allowedSlots = new Set(slots);
+      const allowedStats = new Set(defs.map(d=>d.key));
+
+      const cleaned = [];
+      for (const raw of gear){
+        if (!raw || typeof raw !== "object") continue;
+        if (mode !== "runes" && !allowedSlots.has(raw.slot)) continue;
+        if (mode === "runes" && !raw.slot) {
+          raw.slot = slots[0];
+        }
+        const statsIn = raw.stats && typeof raw.stats === "object" ? raw.stats : {};
+        const stats = {};
+        for (const k of Object.keys(statsIn)){
+          if (!allowedStats.has(k)) continue;
+          const v = safeEvalExpression(String(statsIn[k]));
+          if (!Number.isFinite(v)) continue;
+          if (v !== 0) stats[k] = v;
+        }
+        if (!Object.values(stats).some(x=>normalizeNumber(x)!==0)) {
+          continue;
+        }
+
+        cleaned.push({
+          id: raw.id != null ? String(raw.id) : null,
+          name: String(raw.name ?? "").slice(0, 120),
+          slot: raw.slot,
+          stats,
+          statsVecI: buildStatsVecI(stats, defs),
+          frozen: !!raw.frozen,
+          updatedAt: normalizeNumber(raw.updatedAt ?? Date.now())
+        });
+      }
+
+      if (mode === "runes"){
+        const used = new Set();
+        for (const it of cleaned){
+          if (it.id && !used.has(it.id)) used.add(it.id);
+          else it.id = null;
+        }
+        for (const it of cleaned){
+          if (!it.id) it.id = allocateAlphaIdForModeSlot('runes', it.slot);
+        }
+      } else {
+        const idsBySlot = new Map(slots.map(s=>[s, new Set()]));
+        for (const it of cleaned){
+          const used = idsBySlot.get(it.slot);
+          if (!it.id || it.id.length > 10 || used.has(it.id)) it.id = null;
+          if (it.id) used.add(it.id);
+        }
+        for (const it of cleaned){
+          if (!it.id) it.id = allocateAlphaIdForModeSlot(mode, it.slot);
+        }
+      }
+
+      for (const slot of slots){
+        const items = cleaned.filter(x=>x.slot===slot);
+        if (items.length >= 2 && items.every(x=>x.frozen)){
+          items.sort((a,b)=> normalizeNumber(b.updatedAt)-normalizeNumber(a.updatedAt));
+          for (let i=1;i<items.length;i++) items[i].frozen = false;
+        }
+      }
+
+      if (mode === "hero") state.gear.hero = cleaned;
+      else if (mode === "pet") state.gear.pet = cleaned;
+      else state.gear.runes = cleaned;
+    }
+
+    function renderSlotOptions(){
+      const slots = currentSlots();
+      const sel = $("#inSlot");
+      const prev = sel.value;
+      sel.innerHTML = "";
+      slots.forEach(s=>{
+        const o = document.createElement("option");
+        o.value = s;
+        o.textContent = s;
+        sel.appendChild(o);
+      });
+      if (prev && slots.includes(prev)) sel.value = prev;
+      $("#slotHint").textContent = ``;
+    }
+
+    function renderStatsInputs(){
+      const defs = currentStats();
+      const host = $("#statsFields");
+      host.innerHTML = "";
+      const wrap = document.createElement("div");
+      wrap.className = "formGrid";
+      defs.forEach((def)=>{
+        const field = document.createElement("div");
+        field.className = "field w4";
+        const clean = def.label.replace(/^..\s*/, "");
+        field.innerHTML = `
+          <div class="label"><span>${def.label}</span></div>
+          <div class="control"><input id="st_${def.key}" type="text" inputmode="decimal" placeholder="${clean} %" /></div>
+        `;
+        wrap.appendChild(field);
+      });
+      host.appendChild(wrap);
+    }
+
+    // --- Edit ---
+    let editItemId = null;
+    let editItemSlot = null;
+
+    function fillFormForEdit(item){
+      editItemId = item.id;
+      editItemSlot = item.slot;
+
+      $("#inSlot").value = item.slot;
+      $("#inName").value = item.name || "";
+      const defs = currentStats();
+      for (const def of defs){
+        const el = $("#st_" + def.key);
+        if (el) el.value = (item.stats?.[def.key] ?? "");
+      }
+
+      $("#btnAddUpdate").textContent = "💾 Сохранить";
+      $("#editHint").textContent = "✏️ Редактирование предмета";
+      $("#btnCancelEdit").disabled = false;
+      $("#btnCancelEdit").style.display = "";
+      syncAddButtonState();
+    }
+
+    function renderItems(){
+      const list = $("#itemsList");
+      const gear = currentGear();
+      const slots = currentSlots();
+      const defs = currentStats();
+
+      const escapeHtml = (v) => String(v ?? "").replace(/[&<>"']/g, (ch)=>(
+        ch === "&" ? "&amp;" :
+        ch === "<" ? "&lt;" :
+        ch === ">" ? "&gt;" :
+        ch === '"' ? "&quot;" : "&#39;"
+      ));
+
+      const bySlot = new Map(slots.map(s=>[s, []]));
+      for (const it of gear){
+        if (!bySlot.has(it.slot)) bySlot.set(it.slot, []);
+        bySlot.get(it.slot).push(it);
+      }
+
+      list.innerHTML = "";
+      let frozenCount = 0;
+
+      const frag = document.createDocumentFragment();
+
+      for (const slot of slots){
+        const items = (bySlot.get(slot) || []).slice().sort((a,b)=> String(a.id||"").localeCompare(String(b.id||""), "en", {sensitivity:"base"}));
+        frozenCount += items.filter(x=>x.frozen).length;
+
+        const group = document.createElement("details");
+        group.className = "slotGroup";
+        group.open = false;
+
+        group.innerHTML = `
+          <summary>
+            <div class="slotGroupTitle">
+              <strong>${escapeHtml(slot)}</strong>
+              <span>Предметов: ${items.length}</span>
+            </div>
+            <div class="chipRow" style="justify-content:flex-end">
+              <span class="tag">${items.some(x=>x.frozen) ? "❄️ есть замороженные" : "—"}</span>
+            </div>
+          </summary>
+          <div class="slotGroupBody" data-slot-body="${escapeHtml(slot)}"></div>
+        `;
+
+        const body = group.querySelector(`[data-slot-body="${CSS.escape(slot)}"]`) || group.querySelector(".slotGroupBody");
+
+        for (const it of items){
+          const el = document.createElement("div");
+          el.className = "item" + (it.frozen ? " frozen" : "");
+          const statsLine = it.statsLineCache ?? (it.statsLineCache = formatStatsLine(it.stats, defs));
+          el.innerHTML = `
+            <div>
+              <div class="itemName">
+                <strong>${it.id ? `[${escapeHtml(it.id)}] ` : ""}${escapeHtml(it.name || "(без названия)")} ${it.frozen ? "❄️" : ""}</strong>
+                <span>${escapeHtml(it.slot)}</span>
+              </div>
+              <div class="itemStats">
+                <span class="tag">${escapeHtml(statsLine)}</span>
+              </div>
+            </div>
+            <div class="itemBtns">
+              <button class="iconBtn" title="Редактировать" data-act="edit" data-id="${escapeHtml(it.id)}" data-slot="${escapeHtml(it.slot)}">✏️</button>
+              <button class="iconBtn" title="${it.frozen ? "Разморозить" : "Заморозить"}" data-act="freeze" data-id="${escapeHtml(it.id)}" data-slot="${escapeHtml(it.slot)}">${it.frozen ? "🔥" : "❄️"}</button>
+              <button class="iconBtn danger" title="Удалить" data-act="del" data-id="${escapeHtml(it.id)}" data-slot="${escapeHtml(it.slot)}">🗑️</button>
+            </div>
+          `;
+          body.appendChild(el);
+        }
+
+        frag.appendChild(group);
+      }
+
+      list.appendChild(frag);
+
+      $("#itemsCount").textContent = gear.length;
+      $("#frozenCount").textContent = frozenCount;
+    }
+
+    function renderSortSelect(){
+      const sel = $("#inSort");
+      const defs = currentStats();
+      const enabled = new Set(activeSortKeys());
+
+      const prev = sel.value;
+      sel.innerHTML = "";
+
+      for (const d of defs){
+        const o = document.createElement("option");
+        o.value = d.key;
+        o.textContent = d.label;
+        if (!enabled.has(d.key)){
+          o.disabled = true;
+          o.textContent = d.label + " (нет в снаряжении)";
+        }
+        sel.appendChild(o);
+      }
+
+      const stillOk = prev && enabled.has(prev);
+      if (stillOk){
+        sel.value = prev;
+      } else {
+        const firstEnabled2 = defs.find(d => enabled.has(d.key));
+        sel.value = firstEnabled2 ? firstEnabled2.key : defs[0].key;
+      }
+
+      $("#sortHint").textContent = "";
+    }
+
+    function setGenStatus(text, kind){
+      const el = $("#genStatusTag");
+      if (!text){
+        el.style.display = "none";
+        el.textContent = "";
+        el.className = "tag";
+        return;
+      }
+      el.style.display = "";
+      el.textContent = text;
+      el.className = "tag " + (kind || "");
+    }
+
+    // --- Results ---
+    let lastGeneratedPacked = [];
+    let shownPacked = [];
+    const PAGE_SIZE = 200;
+    let page = 0;
+    let resultsCollapsed = true;
+
+    function syncExpandCollapseBtn(){
+      $("#btnExpandCollapse").textContent = resultsCollapsed ? "📂 Развернуть всё" : "📁 Свернуть всё";
+    }
+
+    function collapseAllResults(collapse){
+      const details = $$("#resultsList details.result");
+      for (const d of details){ d.open = !collapse; }
+      resultsCollapsed = collapse;
+      syncExpandCollapseBtn();
+    }
+
+    function renderPager(){
+      const total = shownPacked.length;
+      const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      if (!total){
+        $("#fieldPager").style.display = "none";
+        return;
+      }
+      $("#fieldPager").style.display = "";
+      if (page >= pages) page = pages - 1;
+      if (page < 0) page = 0;
+      $("#pagerHint").textContent = `Страница ${page+1} из ${pages} • Результатов: ${total} • На странице: ${PAGE_SIZE}`;
+      $("#btnPrevPage").disabled = page <= 0;
+      $("#btnNextPage").disabled = page >= pages - 1;
+    }
+
+    function syncApplyRangeBtnState(){
+      const hasGenerated = lastGeneratedPacked.length > 0;
+      const fromRaw = ($("#inRangeFrom")?.value ?? "").trim();
+      const toRaw = ($("#inRangeTo")?.value ?? "").trim();
+      const hasAnyRange = (fromRaw !== "" || toRaw !== "");
+      $("#btnApplyRange").disabled = !(hasGenerated && hasAnyRange);
+
+      const canReset = (fromRaw !== "" || toRaw !== "");
+      $("#btnResetRange").disabled = !canReset;
+    }
+
+    function vecIToStatsObj(vecI, defs){
+      const o = {};
+      for (let i=0;i<defs.length;i++){
+        const val = formatPercentNumber(fromFixedInt(vecI[i]));
+        if (val !== 0) o[defs[i].key] = val;
+      }
+      return o;
+    }
+
+    function buildSetSummaryFromVecI(combo, totalVecI, defs){
+      const slots = state.mode === "runes"
+        ? combo.map((it, i) => (it && it.slot) ? it.slot : `Rune ${i+1}`)
+        : currentSlots();
+      const total = vecIToStatsObj(totalVecI, defs);
+
+      let derived = {};
+      if (state.mode === "hero"){
+        const hpIdx = defs.findIndex(d=>d.key==="hp");
+        const hpPct = fromFixedInt(totalVecI[hpIdx] ?? 0);
+        derived.totalHp = Math.round(state.settings.baseHp * (1 + (hpPct / 100)));
+      }
+
+      const slotLines = slots.map((slot, i)=>{
+        const it = combo[i];
+        return {
+          slot,
+          name: it ? `${it.id ? `[${it.id}] ` : ""}${(it.name || "(без названия)")}` : "(пусто)",
+          statsLine: it ? (it.statsLineCache ?? (it.statsLineCache = formatStatsLine(it.stats, defs))) : "—",
+          id: it?.id || null
+        };
+      });
+
+      return { total, derived, slotLines, totalVecI };
+    }
+
+    function downloadText(filename, text, mime){
+      const blob = new Blob([String(text ?? "")], {type: mime || "text/plain"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      const href = a.href;
+      setTimeout(()=> URL.revokeObjectURL(href), 250);
+    }
+
+    function saveConfigSnapshotFromPacked(packed){
+      const defs = currentStats();
+      const variants = buildVariantsPerSlot();
+
+      const combo = new Array(packed.idxs.length);
+      for (let s=0;s<packed.idxs.length;s++){
+        combo[s] = variants[s][packed.idxs[s]];
+      }
+
+      const slots = state.mode === "runes"
+        ? combo.map((it, i) => (it && it.slot) ? it.slot : `Rune ${i+1}`)
+        : currentSlots();
+
+      const summary = buildSetSummaryFromVecI(combo, packed.totalVecI, defs);
+
+      const payload = {
+        id: uid(),
+        mode: state.mode,
+        createdAt: Date.now(),
+        sortBy: $("#inSort").value,
+        top: normalizeNumber($("#inTop").value),
+        sortIntegers: !!state.settings.sortIntegers,
+        items: combo.map((it, i)=>({
+          slot: slots[i],
+          itemId: it?.id || null,
+          alphaId: it?.id || null,
+          name: it?.name || null,
+          stats: it?.stats || null
+        })),
+        total: summary.total,
+        derived: summary.derived
+      };
+
+      state.savedConfigs = state.savedConfigs || [];
+      state.savedConfigs.unshift(payload);
+      persist();
+
+      const dt = new Date(payload.createdAt);
+      const dtStr = dt.toLocaleString();
+
+      const esc = (v)=> String(v ?? "").replace(/[&<>"']/g, (ch)=>(
+        ch === "&" ? "&amp;" :
+        ch === "<" ? "&lt;" :
+        ch === ">" ? "&gt;" :
+        ch === '"' ? "&quot;" : "&#39;"
+      ));
+
+      const statDefs = currentStats();
+      const slotRows = payload.items.map((row)=>{
+        const statsLine = row.stats ? formatStatsLine(row.stats, statDefs) : "—";
+        return `
+          <tr>
+            <td>${esc(row.slot)}</td>
+            <td><span style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-weight:800;">${esc(row.alphaId || "—")}</span></td>
+            <td>${esc(row.name || "—")}</td>
+            <td>${esc(statsLine)}</td>
+          </tr>
+        `;
+      }).join("");
+
+      const totalLine = formatStatsLine(payload.total, statDefs);
+      const derivedLine = (state.mode === "hero" && payload.derived && payload.derived.totalHp != null)
+        ? ` • ❤️ Итог HP: ${esc(payload.derived.totalHp)}`
+        : "";
+
+      const html = `<!doctype html>
+  <html lang="ru">
+  <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gear Set ${esc(payload.id)}</title>
+  <style>
+    :root{ color-scheme: dark; }
+    body{
+      margin:0;
+      padding:24px;
+      background:#0c0f14;
+      color:#e5e7eb;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial;
+      line-height:1.25;
+    }
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+    }
+    h1{
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+    .meta{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(17,24,39,.72);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .metaRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px 14px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .muted{ color:#94a3b8; font-weight: 650; }
+    .tag{
+      display:inline-block;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      font-weight: 800;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(2,6,23,.35);
+      border-radius: 999px;
+      padding: 6px 10px;
+      margin-left: 6px;
+    }
+    table{
+      width:100%;
+      border-collapse: collapse;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(17,24,39,.72);
+      border-radius: 12px;
+      overflow:hidden;
+    }
+    thead th{
+      text-align:left;
+      font-size: 12px;
+      letter-spacing:.2px;
+      padding: 10px 10px;
+      background: rgba(2,6,23,.35);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      white-space:nowrap;
+    }
+    tbody td{
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      vertical-align: top;
+      font-size: 13px;
+    }
+    tbody tr:last-child td{ border-bottom: 0; }
+  </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Сохранённый сет (${esc(payload.mode)})</h1>
+      <div class="meta">
+        <div class="metaRow"><span class="muted">ID:</span> <span class="tag">${esc(payload.id)}</span></div>
+        <div class="metaRow"><span class="muted">Дата:</span> ${esc(dtStr)}</div>
+        <div class="metaRow"><span class="muted">Сортировка:</span> ${esc(payload.sortBy)}</div>
+        <div class="metaRow"><span class="muted">Top:</span> ${esc(payload.top)}</div>
+        <div class="metaRow"><span class="muted">Целые значения:</span> ${esc(payload.sortIntegers ? "да" : "нет")}</div>
+        <div class="metaRow"><span class="muted">Итог:</span> ${esc(totalLine)}${derivedLine}</div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Слот</th>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Параметры</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${slotRows}
+        </tbody>
+      </table>
+    </div>
+  </body>
+  </html>`;
+
+      downloadText(`gear-set_${state.mode}_${payload.id}.html`, html, "text/html");
+    }
+
+    function renderResultsPage(){
+      const list = $("#resultsList");
+      list.innerHTML = "";
+
+      const defs = currentStats();
+      const sortKey = $("#inSort").value;
+      const sortIdx = defs.findIndex(d=>d.key===sortKey);
+
+      const firstDef = defs.find(x=>x.key===sortKey);
+      const restDefs = defs.filter(x=>x.key!==sortKey);
+      const orderedDefs = firstDef ? [firstDef, ...restDefs] : defs;
+
+      const escapeHtml = (v) => String(v ?? "").replace(/[&<>"']/g, (ch)=>(
+        ch === "&" ? "&amp;" :
+        ch === "<" ? "&lt;" :
+        ch === ">" ? "&gt;" :
+        ch === '"' ? "&quot;" : "&#39;"
+      ));
+
+      const variants = buildVariantsPerSlot();
+
+      const start = page * PAGE_SIZE;
+      const end = Math.min(shownPacked.length, start + PAGE_SIZE);
+      const frag = document.createDocumentFragment();
+
+      for (let i=start;i<end;i++){
+        const p = shownPacked[i];
+        const idxs = p.idxs;
+        const combo = new Array(idxs.length);
+        for (let s=0;s<idxs.length;s++){
+          combo[s] = variants[s][idxs[s]];
+        }
+
+        const sortValI_current = (sortIdx >= 0) ? (p.totalVecI[sortIdx] | 0) : (p.sortValI | 0);
+        const summary = buildSetSummaryFromVecI(combo, p.totalVecI, defs);
+
+        const sortVal = formatPercentNumber(fromFixedInt(sortValI_current));
+        const totalLine = formatStatsLine(summary.total, orderedDefs);
+        const extra = (state.mode === "hero")
+          ? ` • ❤️ Итог HP: ${summary.derived.totalHp}`
+          : "";
+
+        const el = document.createElement("details");
+        el.className = "result";
+        el.open = false;
+
+        el.innerHTML = `
+          <summary>
+            <button class="iconBtn" data-act="saveCfg" title="Сохранить" style="position:absolute; top:8px; right:8px; z-index:2;">💾</button>
+            <div class="sumLeft">
+              <div class="sumTitle">
+                <strong>#${i+1} — значение по сортировке: <span class="mono">${escapeHtml(sortVal)}%</span></strong>
+              </div>
+              <div class="sumLine">${escapeHtml(totalLine)}${escapeHtml(extra)}</div>
+            </div>
+          </summary>
+          <div class="resultBody">
+            <div class="kv">
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap: 10px;">
+                <h4>🎒 Экипировка (${combo.length})</h4>
+              </div>
+              <div class="slotsGrid">
+                ${summary.slotLines.map(sl=>`
+                  <div class="slot">
+                    <div class="t">${escapeHtml(sl.slot)}</div>
+                    <div class="n">${escapeHtml(sl.name)}</div>
+                    <div class="s"><span class="tag">${escapeHtml(sl.statsLine)}</span></div>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+          </div>
+        `;
+
+        el.querySelector('[data-act="saveCfg"]').addEventListener("click", (ev)=>{
+          ev.preventDefault();
+          ev.stopPropagation();
+          saveConfigSnapshotFromPacked(p);
+        });
+
+        frag.appendChild(el);
+      }
+
+      list.appendChild(frag);
+
+      $("#btnClearResults").disabled = shownPacked.length === 0;
+      $("#btnExpandCollapse").disabled = shownPacked.length === 0;
+      resultsCollapsed = true;
+      syncExpandCollapseBtn();
+      collapseAllResults(true);
+      renderPager();
+    }
+
+    function clearResults(){
+      lastGeneratedPacked = [];
+      shownPacked = [];
+      page = 0;
+      $("#resultsList").innerHTML = "";
+      $("#btnClearResults").disabled = true;
+      $("#btnExpandCollapse").disabled = true;
+      setGenStatus("", "");
+      syncApplyRangeBtnState();
+      rerenderAll();
+    }
+
+    function computeShownFromAllPacked(){
+      const defs = currentStats();
+      const sortKey = $("#inSort").value;
+      const sortIdx = defs.findIndex(d=>d.key===sortKey);
+      if (sortIdx < 0){
+        setGenStatus("Ошибка: sortKey недоступен", "bad");
+        return;
+      }
+
+      let arr = lastGeneratedPacked.slice();
+
+      if (state.settings.sortIntegers){
+        arr = arr.filter(p => ((p.totalVecI[sortIdx] | 0) % SCALE) === 0);
+      }
+
+      const fromRaw = ($("#inRangeFrom")?.value ?? "").trim();
+      const toRaw = ($("#inRangeTo")?.value ?? "").trim();
+      const from = fromRaw === "" ? null : safeEvalExpression(fromRaw);
+      const to = toRaw === "" ? null : safeEvalExpression(toRaw);
+      if ((from !== null && !Number.isFinite(from)) || (to !== null && !Number.isFinite(to))){
+        alert("Некорректный диапазон (От/До).");
+        return;
+      }
+      const fromI = (from === null) ? null : toFixedInt(from);
+      const toI = (to === null) ? null : toFixedInt(to);
+
+      if (!(fromI === null && toI === null)){
+        arr = arr.filter(p=>{
+          const v = (p.totalVecI[sortIdx] | 0);
+          if (fromI !== null && v < fromI) return false;
+          if (toI !== null && v > toI) return false;
+          return true;
+        });
+      }
+
+      const order = (state.settings.sortOrder || "desc");
+      arr.sort((a,b)=>{
+        const av = (a.totalVecI[sortIdx] | 0);
+        const bv = (b.totalVecI[sortIdx] | 0);
+        return order === "asc" ? (av - bv) : (bv - av);
+      });
+
+      const topN = Math.max(0, normalizeNumber($("#inTop").value));
+      const sliced = (topN === 0) ? arr : arr.slice(0, topN);
+
+      shownPacked = sliced;
+      page = 0;
+      renderResultsPage();
+    }
+
+    // ------- Generation (Worker) -------
+    let isGenerating = false;
+    let genWorker = null;
+    let _cancelForceTimer = null;
+
+    function createGeneratorWorker(){
+      const workerCode = `
+      let cancelled = false;
+      const SCALE = 1000;
+
+      // Глобальные накопители — доступны при cancel
+      let heap = [];
+      let allArr = [];
+      let processed = 0;
+      let leavesFound = 0;
+
+      function computeMaxRemainingContributionI(variants, statIdx){
+        const maxArr = new Int32Array(variants.length);
+        for (let s=0;s<variants.length;s++){
+          let m = -2147483648;
+          const arr = variants[s];
+          for (let i=0;i<arr.length;i++){
+            const v = arr[i].statsVecI[statIdx] | 0;
+            if (v > m) m = v;
+          }
+          if (m === -2147483648) m = 0;
+          maxArr[s] = m;
+        }
+        const suffix = new Int32Array(variants.length + 1);
+        for (let i=variants.length-1;i>=0;i--){
+          suffix[i] = (suffix[i+1] + maxArr[i]) | 0;
+        }
+        return suffix;
+      }
+
+      function heapPush(h, x){
+        h.push(x);
+        let i = h.length - 1;
+        while (i > 0){
+          const p = (i - 1) >> 1;
+          if (h[p].sortValI <= h[i].sortValI) break;
+          const tmp = h[p]; h[p] = h[i]; h[i] = tmp;
+          i = p;
+        }
+      }
+      function heapPop(h){
+        if (!h.length) return null;
+        const top = h[0];
+        const last = h.pop();
+        if (h.length){
+          h[0] = last;
+          let i = 0;
+          while (true){
+            let l = i*2+1, r = l+1, m = i;
+            if (l < h.length && h[l].sortValI < h[m].sortValI) m = l;
+            if (r < h.length && h[r].sortValI < h[m].sortValI) m = r;
+            if (m === i) break;
+            const tmp = h[i]; h[i] = h[m]; h[m] = tmp;
+            i = m;
+          }
+        }
+        return top;
+      }
+      function heapPeek(h){ return h[0] || null; }
+
+      function passesCaps(mode, totalVecI, idxBlock, idxDmgRed, idxManaCost, maxBlockI, maxDmgRedI, maxManaCostI){
+        if (mode === "pet"){
+          if (maxBlockI > 0 && idxBlock >= 0 && totalVecI[idxBlock] > maxBlockI) return false;
+          if (maxDmgRedI > 0 && idxDmgRed >= 0 && totalVecI[idxDmgRed] > maxDmgRedI) return false;
+        }
+        if (mode === "runes"){
+          if (maxManaCostI > 0 && idxManaCost >= 0 && totalVecI[idxManaCost] > maxManaCostI) return false;
+        }
+        return true;
+      }
+
+      function collectAndPostResults(defsLen, sortIdx, order, needAll, topN){
+        const picked = [];
+        if (needAll){
+          for (let i=0;i<allArr.length;i++){
+            picked.push(allArr[i]);
+          }
+          picked.sort((a,b)=> order === "asc" ? (a.sortValI - b.sortValI) : (b.sortValI - a.sortValI));
+        } else {
+          while (heap.length) picked.push(heapPop(heap));
+          picked.sort((a,b)=> order === "asc" ? (a.sortValI - b.sortValI) : (b.sortValI - a.sortValI));
+        }
+        postMessage({ type:"done", results: picked, processed, leaves: leavesFound });
+      }
+
+      async function generate(payload){
+        cancelled = false;
+
+        heap = [];
+        allArr = [];
+        processed = 0;
+        leavesFound = 0;
+
+        const mode = payload.mode;
+        const defsLen = payload.defsLen|0;
+        const sortIdx = payload.sortIdx|0;
+        const order = payload.order;
+        const sortIntegers = !!payload.sortIntegers;
+
+        const fromI = payload.fromI;
+        const toI = payload.toI;
+
+        const topN = payload.topN|0;
+        const needAll = topN === 0;
+
+        const idxBlock = payload.idxBlock|0;
+        const idxDmgRed = payload.idxDmgRed|0;
+        const idxManaCost = payload.idxManaCost|0;
+        const maxBlockI = payload.maxBlockI|0;
+        const maxDmgRedI = payload.maxDmgRedI|0;
+        const maxManaCostI = payload.maxManaCostI|0;
+
+        const warnAt = payload.warnAt|0;
+        const maxUi = payload.maxUi|0;
+
+        const variants = payload.variants.map(slotArr => slotArr.map(it => ({ statsVecI: Int32Array.from(it.statsVecI), id: it.id })));
+
+        // sort each slot by sortIdx depending on order to help pruning
+        for (let s=0;s<variants.length;s++){
+          const arr = variants[s];
+          arr.sort((a,b)=> order === "asc" ? (a.statsVecI[sortIdx] - b.statsVecI[sortIdx]) : (b.statsVecI[sortIdx] - a.statsVecI[sortIdx]));
+        }
+
+        const maxRemainSortSuffix = computeMaxRemainingContributionI(variants, sortIdx);
+
+        // state for DFS
+        const indices = new Uint32Array(variants.length);
+        const totalVecI = new Int32Array(defsLen);
+
+        let processedLocal = 0;
+        let leavesFoundLocal = 0;
+        const CHUNK = 20000;
+
+        function currentSortI(){ return totalVecI[sortIdx] | 0; }
+
+        function pruneByRangeAndTop(nextSlotIndex){
+          const sortValI = currentSortI();
+          if (toI !== null && sortValI > toI) return true;
+
+          if (fromI !== null){
+            const bestPossible = (sortValI + maxRemainSortSuffix[nextSlotIndex]) | 0;
+            if (bestPossible < fromI) return true;
+          }
+
+          if (!needAll && topN > 0 && heap.length >= topN){
+            const minTop = heapPeek(heap).sortValI|0;
+            if (order === "desc"){
+              const bestPossible = (sortValI + maxRemainSortSuffix[nextSlotIndex]) | 0;
+              if (bestPossible <= minTop) return true;
+            } else {
+              const bestPossible = (sortValI + maxRemainSortSuffix[nextSlotIndex]) | 0;
+              if (bestPossible >= minTop) return true;
+            }
+          }
+          return false;
+        }
+
+        function addResult(sortValI){
+          if (sortIntegers && (sortValI % SCALE) !== 0) return;
+
+          if (fromI !== null && sortValI < fromI) return;
+          if (toI !== null && sortValI > toI) return;
+
+          if (!passesCaps(payload.mode, totalVecI, idxBlock, idxDmgRed, idxManaCost, maxBlockI, maxDmgRedI, maxManaCostI)) return;
+
+          const idxCopy = Uint32Array.from(indices);
+          const vecCopy = Int32Array.from(totalVecI);
+
+          const rec = { idxs: idxCopy, sortValI: sortValI|0, totalVecI: vecCopy };
+
+          if (needAll){
+            if (allArr.length < maxUi) allArr.push(rec);
+          } else {
+            if (heap.length < topN){
+              heapPush(heap, rec);
+            } else {
+              const minTop = heapPeek(heap).sortValI|0;
+              if (order === "desc" ? (sortValI > minTop) : (sortValI < minTop)){
+                heapPop(heap);
+                heapPush(heap, rec);
+              }
+            }
+          }
+          leavesFound++;
+          leavesFoundLocal++;
+        }
+
+        // For runes mode we must enumerate combinations (i0 < i1 < ... < i17) from pool
+        if (payload.mode === "runes"){
+          const pool = variants[0];
+          const n = pool.length;
+          const k = variants.length; // should be 18
+          if (n < k){
+            postMessage({ type:"done", results: [], processed:0, leaves:0 });
+            return;
+          }
+
+          const stackIdx = new Int32Array(k);
+          async function dfs_comb(pos, start){
+            if (cancelled) return;
+            if (!passesCaps(payload.mode, totalVecI, idxBlock, idxDmgRed, idxManaCost, maxBlockI, maxDmgRedI, maxManaCostI)) return;
+            if (pruneByRangeAndTop(pos)) return;
+
+            if (pos === k){
+              addResult(currentSortI());
+              return;
+            }
+
+            for (let i=start;i<=n - (k - pos);i++){
+              if (cancelled) return;
+
+              const it = pool[i];
+              stackIdx[pos] = i;
+              indices[pos] = i;
+
+              const vec = it.statsVecI;
+              for (let t=0;t<defsLen;t++) totalVecI[t] = (totalVecI[t] + vec[t]) | 0;
+
+              await dfs_comb(pos + 1, i + 1);
+
+              for (let t=0;t<defsLen;t++) totalVecI[t] = (totalVecI[t] - vec[t]) | 0;
+
+              processed++;
+              processedLocal++;
+              if (processed % CHUNK === 0){
+                postMessage({ type:"progress", processed, leavesFound, combos: payload.combosCount });
+                await new Promise(r=>setTimeout(r,0));
+                if (cancelled){
+                  collectAndPostResults(defsLen, sortIdx, order, needAll, topN);
+                  return;
+                }
+              }
+            }
+          }
+
+          if (payload.combosCount >= warnAt){
+            postMessage({ type:"warn", combos: payload.combosCount });
+          }
+
+          await (async ()=>{ await new Promise(r=>setTimeout(r,0)); await (async function run(){ await dfs_comb(0,0); })(); })();
+
+          if (cancelled){
+            // results already sent in chunk checks; ensure final send
+            collectAndPostResults(defsLen, sortIdx, order, needAll, topN);
+            return;
+          }
+
+          const picked = [];
+          if (needAll){
+            for (let i=0;i<allArr.length;i++) picked.push(allArr[i]);
+            picked.sort((a,b)=> order === "asc" ? (a.sortValI - b.sortValI) : (b.sortValI - a.sortValI));
+          } else {
+            while (heap.length) picked.push(heapPop(heap));
+            picked.sort((a,b)=> order === "asc" ? (a.sortValI - b.sortValI) : (b.sortValI - a.sortValI));
+          }
+
+          postMessage({ type:"done", results: picked, processed, leaves: leavesFound });
+          return;
+        }
+
+        // Non-runes modes: original DFS over slots, picking one per slot (ordered)
+        async function dfs(slotIndex){
+          if (cancelled) return;
+          if (!passesCaps(payload.mode, totalVecI, idxBlock, idxDmgRed, idxManaCost, maxBlockI, maxDmgRedI, maxManaCostI)) return;
+          if (pruneByRangeAndTop(slotIndex)) return;
+
+          if (slotIndex === variants.length){
+            addResult(currentSortI());
+            return;
+          }
+
+          const arr = variants[slotIndex];
+          for (let i=0;i<arr.length;i++){
+            if (cancelled) return;
+
+            indices[slotIndex] = i;
+
+            const vec = arr[i].statsVecI;
+            for (let k=0;k<defsLen;k++) totalVecI[k] = (totalVecI[k] + vec[k]) | 0;
+
+            await dfs(slotIndex + 1);
+
+            for (let k=0;k<defsLen;k++) totalVecI[k] = (totalVecI[k] - vec[k]) | 0;
+
+            processed++;
+            processedLocal++;
+            if (processed % CHUNK === 0){
+              postMessage({ type:"progress", processed, leavesFound, combos: payload.combosCount });
+              await new Promise(r=>setTimeout(r,0));
+              if (cancelled){
+                collectAndPostResults(defsLen, sortIdx, order, needAll, topN);
+                return;
+              }
+            }
+          }
+        }
+
+        if (payload.combosCount >= warnAt){
+          postMessage({ type:"warn", combos: payload.combosCount });
+        }
+
+        await (async ()=>{ await new Promise(r=>setTimeout(r,0)); await (async function runDFS(){ await dfs(0); })(); })();
+
+        if (cancelled){
+          collectAndPostResults(defsLen, sortIdx, order, needAll, topN);
+          return;
+        }
+
+        const picked = [];
+        if (needAll){
+          for (let i=0;i<allArr.length;i++) picked.push(allArr[i]);
+          picked.sort((a,b)=> order === "asc" ? (a.sortValI - b.sortValI) : (b.sortValI - a.sortValI));
+        } else {
+          while (heap.length) picked.push(heapPop(heap));
+          picked.sort((a,b)=> order === "asc" ? (a.sortValI - b.sortValI) : (b.sortValI - a.sortValI));
+        }
+
+        postMessage({ type:"done", results: picked, processed, leaves: leavesFound });
+      }
+
+      onmessage = (e)=>{
+        const msg = e.data;
+        if (!msg || !msg.type) return;
+        if (msg.type === "cancel"){
+          cancelled = true;
+          try{
+            // Attempt to return partial results immediately if possible
+            collectAndPostResults(msg.payload?.defsLen|0, msg.payload?.sortIdx|0, msg.payload?.order || "desc", !!msg.payload?.needAll, msg.payload?.topN|0);
+          }catch(err){
+            postMessage({ type:"cancelled" });
+          }
+          return;
+        }
+        if (msg.type === "start"){
+          generate(msg.payload).catch(err=>{
+            postMessage({ type:"error", error: String(err && err.stack || err) });
+          });
+          return;
+        }
+      };
+      `;
+      const blob = new Blob([workerCode], { type: "application/javascript" });
+      const url = URL.createObjectURL(blob);
+      const w = new Worker(url);
+      URL.revokeObjectURL(url);
+      return w;
+    }
+
+    function syncGenerateStopButton(){
+      const btn = $("#btnGenerateStop");
+      if (isGenerating){
+        btn.classList.remove("primary");
+        btn.classList.add("danger");
+        btn.textContent = "⛔ Остановить";
+        btn.disabled = false;
+      } else {
+        btn.classList.remove("danger");
+        btn.classList.add("primary");
+        btn.textContent = "🚀 Генерировать Сеты";
+        btn.disabled = (countPossibleCombos() === 0);
+      }
+    }
+
+    function syncPrimaryButtonsState(){
+      const gear = currentGear();
+      syncGenerateStopButton();
+      $("#btnResetDefault").disabled = gear.length === 0 || isGenerating;
+      $("#btnExport").disabled = gear.length === 0;
+      $("#btnExpandCollapse").disabled = shownPacked.length === 0;
+      $("#btnClearResults").disabled = shownPacked.length === 0;
+    }
+
+    function renderMeta(){
+      const combos = countPossibleCombos();
+      $("#gearTitle").textContent = state.mode === "hero" ? "🦸 Снаряжение героя" : state.mode === "pet" ? "🦍 Снаряжение питомца" : "🔮 Руны";
+      $("#comboCountInline").textContent = combos === Number.POSITIVE_INFINITY ? "∞" : String(combos);
+      $("#swSortIntegers").classList.toggle("on", !!state.settings.sortIntegers);
+      $("#swSortIntegers").setAttribute("aria-checked", String(!!state.settings.sortIntegers));
+      $("#inSortOrder").value = state.settings.sortOrder || "desc";
+
+      $("#fieldRangeBox").style.display = (lastGeneratedPacked.length ? "" : "none");
+      syncAddButtonState();
+      syncPrimaryButtonsState();
+      syncApplyRangeBtnState();
+      renderPager();
+    }
+
+    function clearForm(){
+      editItemId = null;
+      editItemSlot = null;
+
+      $("#inName").value = "";
+      for (const def of currentStats()){
+        const el = $("#st_" + def.key);
+        if (el) el.value = "";
+      }
+      $("#btnAddUpdate").textContent = "➕ Добавить";
+      $("#editHint").textContent = "";
+      $("#btnAddUpdate").disabled = true;
+      $("#btnCancelEdit").disabled = true;
+      $("#btnCancelEdit").style.display = "none";
+      syncAddButtonState();
+    }
+
+    function hasAnyStats(statsObj){
+      return Object.values(statsObj || {}).some(v => normalizeNumber(v) !== 0);
+    }
+
+    function syncAddButtonState(){
+      const tmpStats = {};
+      for (const def of currentStats()){
+        const raw = ($("#st_" + def.key)?.value ?? "");
+        const v = safeEvalExpression(raw);
+        if (Number.isFinite(v) && v !== 0) tmpStats[def.key] = v;
+      }
+      $("#btnAddUpdate").disabled = !hasAnyStats(tmpStats) || isGenerating;
+    }
+
+    function statsVecKeyI(vecI){
+      return Array.from(vecI).join("|");
+    }
+
+    function readFormToItem(){
+      const stats = {};
+      for (const def of currentStats()){
+        const raw = $("#st_" + def.key).value;
+        const v = safeEvalExpression(raw);
+        if (!Number.isFinite(v)) return { error: `Некорректное выражение для ${def.label}: "${raw}"` };
+        if (v !== 0) stats[def.key] = v;
+      }
+
+      return {
+        id: editItemId || uid(),
+        name: $("#inName").value.trim(),
+        slot: $("#inSlot").value,
+        stats,
+        statsVecI: buildStatsVecI(stats, currentStats()),
+        frozen: false,
+        updatedAt: Date.now()
+      };
+    }
+
+    function upsertItemFromForm(){
+      const gear = currentGear();
+      const item = readFormToItem();
+      if (item?.error){
+        alert(item.error);
+        return;
+      }
+      if (!hasAnyStats(item.stats)){
+          alert("Нельзя добавить снаряжение без параметров. Укажите хотя бы один параметр (не 0).");
+          return;
+      }
+
+      const key = statsVecKeyI(item.statsVecI);
+
+      if (editItemId){
+        const idx = gear.findIndex(x=>x.id===editItemId && x.slot===editItemSlot);
+        if (idx < 0){
+          clearForm();
+          return;
+        }
+
+        if (state.mode !== "runes"){
+          const sameSlot = gear.filter(x => x.slot === item.slot && !(x.id===editItemId && x.slot===editItemSlot));
+          if (sameSlot.some(x => statsVecKeyI(x.statsVecI) === key)){
+            alert("Нельзя сохранить: в этом слоте уже есть предмет с такими же параметрами.");
+            return;
+          }
+        } else {
+          const otherSameId = gear.find(x => x.id !== editItemId && x.id === item.id);
+          if (otherSameId){
+            alert("ID уже используется. Попробуйте другое имя (id генерируется автоматически при добавлении).");
+            return;
+          }
+        }
+
+        item.frozen = !!gear[idx].frozen;
+        item.updatedAt = Date.now();
+        gear[idx] = item;
+      } else {
+        if (state.mode !== "runes"){
+          const sameSlot = gear.filter(x => x.slot === item.slot);
+          if (sameSlot.some(x => statsVecKeyI(x.statsVecI) === key)){
+            alert("Нельзя добавить предмет: в этом слоте уже есть предмет с такими же параметрами.");
+            return;
+          }
+          item.id = allocateAlphaId(item.slot);
+          gear.push(item);
+        } else {
+          item.id = allocateAlphaId(item.slot);
+          gear.push(item);
+        }
+      }
+
+      enforceInvariantsForMode(state.mode);
+      persist();
+      clearForm();
+      rerenderAll();
+    }
+
+    function toggleFreeze(id, slot){
+      const gear = currentGear();
+      const it = gear.find(x=>x.id===id && x.slot===slot);
+      if (!it) return;
+
+      const sameSlot = gear.filter(x => x.slot === it.slot);
+      if (!it.frozen){
+        const nonFrozenCount = sameSlot.filter(x => !x.frozen).length;
+        if (nonFrozenCount <= 1){
+          alert("Нельзя заморозить все предметы в этом слоте: должен остаться хотя бы один незамороженный предмет.");
+          return;
+        }
+      }
+      it.frozen = !it.frozen;
+      it.updatedAt = Date.now();
+      enforceInvariantsForMode(state.mode);
+      persist();
+      rerenderAll();
+    }
+
+    function deleteItem(id, slot){
+      const gear = currentGear();
+      const idx = gear.findIndex(x=>x.id===id && x.slot===slot);
+      if (idx < 0) return;
+      gear.splice(idx,1);
+      enforceInvariantsForMode(state.mode);
+      persist();
+      rerenderAll();
+    }
+
+    function generateTopCombosWorker(){
+      const combosCount = countPossibleCombos();
+      if (combosCount === 0){
+        alert("Нет возможных комбинаций: добавьте предметы во все слоты (для рун нужно как минимум 18 рун).");
+        return;
+      }
+
+      const defs = currentStats();
+      const sortKey = $("#inSort").value;
+      const sortIdx = defs.findIndex(d=>d.key===sortKey);
+      if (sortIdx < 0){
+        setGenStatus("Ошибка: выбранный параметр сортировки недоступен.", "bad");
+        return;
+      }
+
+      const order = (state.settings.sortOrder || "desc");
+
+      const idxBlock = defs.findIndex(d=>d.key==="block");
+      const idxDmgRed = defs.findIndex(d=>d.key==="dmgRed");
+      const idxManaCost = defs.findIndex(d=>d.key==="manaCost");
+
+      const fromRaw = ($("#inRangeFrom")?.value ?? "").trim();
+      const toRaw = ($("#inRangeTo")?.value ?? "").trim();
+      const from = fromRaw === "" ? null : safeEvalExpression(fromRaw);
+      const to = toRaw === "" ? null : safeEvalExpression(toRaw);
+      if ((from !== null && !Number.isFinite(from)) || (to !== null && !Number.isFinite(to))){
+        alert("Некорректный диапазон (От/До).");
+        return;
+      }
+      const fromI = (from === null) ? null : toFixedInt(from);
+      const toI = (to === null) ? null : toFixedInt(to);
+
+      const topN = Math.max(0, normalizeNumber($("#inTop").value));
+
+      const variants = buildVariantsPerSlot();
+      const packedVariants = variants.map(slotArr => slotArr.map(it => ({ statsVecI: Array.from(it.statsVecI || buildStatsVecI(it.stats, defs)), id: it.id || null })));
+
+      const maxBlockI = toFixedInt(state.settings.maxBlock);
+      const maxDmgRedI = toFixedInt(state.settings.maxDmgRed);
+      const maxManaCostI = toFixedInt(state.settings.maxManaCost);
+
+      const warnAt = 100000;
+      const maxUi = 100000;
+
+      isGenerating = true;
+      syncPrimaryButtonsState();
+      setGenStatus("Генерация...", "warn");
+
+      if (genWorker) { try{ genWorker.terminate(); }catch(e){} genWorker = null; }
+      genWorker = createGeneratorWorker();
+
+      genWorker.onmessage = (e)=>{
+        // clear potential force-timer on any worker message (done/progress/warn/etc.)
+        if (_cancelForceTimer){ clearTimeout(_cancelForceTimer); _cancelForceTimer = null; }
+
+        const msg = e.data;
+        if (!msg || !msg.type) return;
+
+        if (msg.type === "warn"){
+          setGenStatus(`Большая генерация: ≈ ${msg.combos}`, "warn");
+          return;
+        }
+        if (msg.type === "progress"){
+          const processed = msg.processed || 0;
+          const found = msg.leavesFound || msg.found || 0;
+          const combos = msg.combos || combosCount;
+          const pct = combos ? Math.min(100, Math.round((processed / combos) * 100)) : 0;
+          setGenStatus(`Генерация... ${pct}% • обработано: ${processed} • найдено: ${found}`, "warn");
+          return;
+        }
+        if (msg.type === "cancelled"){
+          try{ genWorker.terminate(); }catch(e){}
+          genWorker = null;
+          isGenerating = false;
+          setGenStatus("Остановлено.", "bad");
+          syncPrimaryButtonsState();
+          return;
+        }
+        if (msg.type === "error"){
+          console.error(msg.error);
+          alert("Ошибка генерации (worker). Смотри консоль.");
+          try{ genWorker.terminate(); }catch(e){}
+          genWorker = null;
+          isGenerating = false;
+          setGenStatus("Ошибка генерации.", "bad");
+          syncPrimaryButtonsState();
+          return;
+        }
+        if (msg.type === "done"){
+          const results = msg.results || [];
+          lastGeneratedPacked = results.map(r=>({
+            idxs: Uint16Array.from(r.idxs),
+            sortValI: r.sortValI|0,
+            totalVecI: Int32Array.from(r.totalVecI)
+          }));
+
+          try{ genWorker.terminate(); }catch(e){}
+          genWorker = null;
+
+          isGenerating = false;
+          setGenStatus(`Готово • результатов: ${lastGeneratedPacked.length}`, "ok");
+          syncPrimaryButtonsState();
+          syncApplyRangeBtnState();
+
+          computeShownFromAllPacked();
+          renderMeta();
+          return;
+        }
+      };
+
+      genWorker.onerror = (err)=>{
+        console.error("Worker error", err);
+        try{ genWorker.terminate(); }catch(e){}
+        genWorker = null;
+        isGenerating = false;
+        setGenStatus("Ошибка воркера.", "bad");
+        syncPrimaryButtonsState();
+      };
+
+      genWorker.postMessage({
+        type:"start",
+        payload:{
+          mode: state.mode,
+          defsLen: defs.length,
+          sortIdx,
+          order,
+          sortIntegers: !!state.settings.sortIntegers,
+          fromI,
+          toI,
+          topN,
+          idxBlock,
+          idxDmgRed,
+          idxManaCost,
+          maxBlockI,
+          maxDmgRedI,
+          maxManaCostI,
+          variants: packedVariants,
+          combosCount,
+          warnAt,
+          maxUi
+        }
+      });
+    }
+
+    let _cancelForceTimer_local = null;
+
+    function stopGeneration(){
+      if (!genWorker) return;
+      try{
+        // отправляем запрос на аккуратную отмену
+        genWorker.postMessage({ type:"cancel", payload:{
+          defsLen: currentStats().length,
+          sortIdx: $("#inSort") ? currentStats().findIndex(d=>d.key===$("#inSort").value) : 0,
+          order: state.settings.sortOrder || "desc",
+          needAll: Math.max(0, normalizeNumber($("#inTop").value)) === 0,
+          topN: Math.max(0, normalizeNumber($("#inTop").value))
+        } });
+      }catch(e){}
+
+      // даём воркеру время (порог), чтобы он отправил partial/done
+      // после этого форсируем terminate
+      if (_cancelForceTimer_local) { clearTimeout(_cancelForceTimer_local); _cancelForceTimer_local = null; }
+
+      _cancelForceTimer_local = setTimeout(()=>{
+        try{ genWorker && genWorker.terminate(); }catch(e){}
+        genWorker = null;
+        isGenerating = false;
+        setGenStatus("Остановлено (форс).", "bad");
+        syncPrimaryButtonsState();
+      }, 2000); // 2 секунды — можно увеличить при необходимости
+    }
+
+    function onGenerateStopClick(){
+      if (isGenerating) stopGeneration();
+      else generateTopCombosWorker();
+    }
+
+    function openSettings(){
+      $("#inBaseHp").value = String(state.settings.baseHp);
+      $("#inMaxBlock").value = String(state.settings.maxBlock ?? 0);
+      $("#inMaxDmgRed").value = String(state.settings.maxDmgRed ?? 0);
+      $("#inMaxManaCost").value = String(state.settings.maxManaCost ?? 0);
+      $("#settingsBackdrop").classList.add("show");
+      $("#settingsBackdrop").setAttribute("aria-hidden","false");
+    }
+    function closeSettings(){
+      $("#settingsBackdrop").classList.remove("show");
+      $("#settingsBackdrop").setAttribute("aria-hidden","true");
+    }
+    function saveSettings(){
+      state.settings.baseHp = Math.max(0, normalizeNumber($("#inBaseHp").value));
+      state.settings.maxBlock = Math.max(0, normalizeNumber($("#inMaxBlock").value));
+      state.settings.maxDmgRed = Math.max(0, normalizeNumber($("#inMaxDmgRed").value));
+      state.settings.maxManaCost = Math.max(0, normalizeNumber($("#inMaxManaCost").value));
+      persist();
+      closeSettings();
+      rerenderAll();
+    }
+
+    function renderModeUI(mode){
+      $("#segHero").classList.toggle("active", mode === "hero");
+      $("#segPet").classList.toggle("active", mode === "pet");
+      $("#segRunes").classList.toggle("active", mode === "runes");
+    }
+
+    function setMode(mode){
+      if (isGenerating) return;
+      state.mode = mode;
+      persist();
+
+      renderModeUI(mode);
+      enforceInvariantsForMode(mode);
+      renderSlotOptions();
+      renderStatsInputs();
+      clearForm();
+
+      clearResults();
+      rerenderAll();
+    }
+
+    function rerenderAll(){
+      renderMeta();
+      renderItems();
+      renderSortSelect();
+      syncPrimaryButtonsState();
+    }
+
+    function debounce(fn, ms){
+      let t = null;
+      return (...args)=>{
+        clearTimeout(t);
+        t = setTimeout(()=> fn(...args), ms);
+      };
+    }
+
+    function validateAndNormalizeImportedState(parsed){
+      if (!parsed || typeof parsed !== "object") return null;
+      if (!parsed.settings || typeof parsed.settings !== "object") return null;
+      if (!parsed.gear || typeof parsed.gear !== "object") return null;
+
+      const out = deepClone(parsed);
+      out.version ??= 2;
+      out.theme ??= "dark";
+      out.mode = (out.mode === "runes") ? "runes" : (out.mode === "pet") ? "pet" : "hero";
+
+      out.settings ??= {};
+      out.settings.baseHp = Math.max(0, normalizeNumber(out.settings.baseHp ?? 15725));
+      out.settings.maxBlock = Math.max(0, normalizeNumber(out.settings.maxBlock ?? 0));
+      out.settings.maxDmgRed = Math.max(0, normalizeNumber(out.settings.maxDmgRed ?? 0));
+      out.settings.maxManaCost = Math.max(0, normalizeNumber(out.settings.maxManaCost ?? 0));
+      out.settings.sortIntegers = !!out.settings.sortIntegers;
+      out.settings.sortOrder = (out.settings.sortOrder === "asc") ? "asc" : "desc";
+
+      out.gear.hero = Array.isArray(out.gear.hero) ? out.gear.hero : [];
+      out.gear.pet = Array.isArray(out.gear.pet) ? out.gear.pet : [];
+      out.gear.runes = Array.isArray(out.gear.runes) ? out.gear.runes : [];
+
+      out.savedConfigs = Array.isArray(out.savedConfigs) ? out.savedConfigs : [];
+      out.nextAlphaId ??= { hero: 0, pet: 0, runes: 0 };
+      out.nextAlphaId.hero = Math.max(0, normalizeNumber(out.nextAlphaId.hero ?? 0));
+      out.nextAlphaId.pet = Math.max(0, normalizeNumber(out.nextAlphaId.pet ?? 0));
+      out.nextAlphaId.runes = Math.max(0, normalizeNumber(out.nextAlphaId.runes ?? 0));
+
+      return out;
+    }
+
+    function bindEvents(){
+      $("#btnAddUpdate").addEventListener("click", upsertItemFromForm);
+      $("#btnCancelEdit").addEventListener("click", clearForm);
+
+      $("#btnGenerateStop").addEventListener("click", onGenerateStopClick);
+
+      $("#btnClearResults").addEventListener("click", clearResults);
+      $("#btnExpandCollapse").addEventListener("click", ()=>{
+        collapseAllResults(!resultsCollapsed ? true : false);
+      });
+
+      $("#btnPrevPage").addEventListener("click", ()=>{
+        if (page > 0){ page--; renderResultsPage(); }
+      });
+      $("#btnNextPage").addEventListener("click", ()=>{
+        const pages = Math.max(1, Math.ceil(shownPacked.length / PAGE_SIZE));
+        if (page < pages - 1){ page++; renderResultsPage(); }
+      });
+
+      $("#btnExport").addEventListener("click", ()=>{
+        const payload = deepClone(state);
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `gear-generator-config_${new Date().toISOString().slice(0,19).replaceAll(":","-")}.json`;
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        const href = a.href;
+        setTimeout(()=> URL.revokeObjectURL(href), 250);
+      });
+
+      $("#btnResetDefault").addEventListener("click", ()=>{
+        if (isGenerating) return;
+        if (!confirm("Сбросить к дефолту? Будут удалены все добавленные предметы и результаты.")) return;
+        state = DEFAULT_STATE();
+        persist();
+        rerenderAll();
+        clearResults();
+      });
+
+      $("#fileImport").addEventListener("change", (e)=>{
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try{
+            const parsed = JSON.parse(String(reader.result || ""));
+            const normalized = validateAndNormalizeImportedState(parsed);
+            if (!normalized) throw new Error("bad");
+            state = normalized;
+
+            enforceInvariantsForMode("hero");
+            enforceInvariantsForMode("pet");
+            enforceInvariantsForMode("runes");
+            persist();
+
+            setMode(state.mode || "hero");
+            rerenderAll();
+            clearResults();
+            alert("Импорт выполнен.");
+          }catch(err){
+            alert("Ошибка импорта: неверный JSON конфиг.");
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = "";
+      });
+
+      $("#btnSettings").addEventListener("click", openSettings);
+      $("#btnCloseSettings").addEventListener("click", closeSettings);
+      $("#settingsBackdrop").addEventListener("click", (e)=>{
+        if (e.target === $("#settingsBackdrop")) closeSettings();
+      });
+      $("#btnSaveSettings").addEventListener("click", saveSettings);
+
+      $("#swSortIntegers").addEventListener("click", ()=>{
+        $("#swSortIntegers").classList.toggle("on");
+        state.settings.sortIntegers = $("#swSortIntegers").classList.contains("on");
+        $("#swSortIntegers").setAttribute("aria-checked", String(!!state.settings.sortIntegers));
+        persist();
+        renderMeta();
+        if (lastGeneratedPacked.length) computeShownFromAllPacked();
+      });
+
+      $("#inSortOrder").addEventListener("change", ()=>{
+        state.settings.sortOrder = $("#inSortOrder").value;
+        persist();
+        if (lastGeneratedPacked.length) computeShownFromAllPacked();
+        renderMeta();
+      });
+
+      $("#segHero").addEventListener("click", ()=> setMode("hero"));
+      $("#segPet").addEventListener("click", ()=> setMode("pet"));
+      $("#segRunes").addEventListener("click", ()=> setMode("runes"));
+
+      $("#inSort").addEventListener("change", ()=>{
+        if (lastGeneratedPacked.length) computeShownFromAllPacked();
+        renderMeta();
+      });
+
+      const debouncedTop = debounce(()=>{
+        if (lastGeneratedPacked.length) computeShownFromAllPacked();
+        syncPrimaryButtonsState();
+      }, 200);
+      $("#inTop").addEventListener("input", debouncedTop);
+
+      $("#btnApplyRange").addEventListener("click", ()=>{
+        if (!lastGeneratedPacked.length) return;
+        computeShownFromAllPacked();
+        renderMeta();
+      });
+
+      $("#btnResetRange").addEventListener("click", ()=>{
+        if ($("#btnResetRange").disabled) return;
+        $("#inRangeFrom").value = "";
+        $("#inRangeTo").value = "";
+        if (lastGeneratedPacked.length) computeShownFromAllPacked();
+        syncApplyRangeBtnState();
+        renderMeta();
+      });
+
+      const debouncedRange = debounce(()=>{
+        syncApplyRangeBtnState();
+        renderMeta();
+      }, 200);
+      $("#inRangeFrom").addEventListener("input", debouncedRange);
+      $("#inRangeTo").addEventListener("input", debouncedRange);
+
+      $("#statsFields").addEventListener("input", (e)=>{
+        const t = e.target;
+        if (!(t instanceof HTMLInputElement)) return;
+        if (!t.id || !t.id.startsWith("st_")) return;
+        syncAddButtonState();
+      });
+
+      $("#itemsList").addEventListener("click", (e)=>{
+        const btn = e.target.closest("button[data-act]");
+        if (!btn) return;
+        const act = btn.dataset.act;
+        const id = btn.dataset.id;
+        const slot = btn.dataset.slot;
+        const gear = currentGear();
+        const it = gear.find(x=>x.id===id && x.slot===slot);
+
+        if (act === "edit" && it) fillFormForEdit(it);
+        if (act === "freeze") toggleFreeze(id, slot);
+        if (act === "del"){
+          if (confirm("Удалить предмет?")) deleteItem(id, slot);
+        }
+      });
+
+      document.addEventListener("keydown", (e)=>{
+        if (e.key === "Escape" && $("#settingsBackdrop").classList.contains("show")) closeSettings();
+      });
+    }
+
+    function init(){
+      load();
+      enforceInvariantsForMode("hero");
+      enforceInvariantsForMode("pet");
+      enforceInvariantsForMode("runes");
+
+      renderSlotOptions();
+      renderStatsInputs();
+      clearForm();
+
+      renderModeUI(state.mode || "hero");
+      setMode(state.mode || "hero");
+      rerenderAll();
+
+      bindEvents();
+    }
+
+    init();
+
+    // safeEvalExpression (same as earlier)
+    function safeEvalExpression(expr){
+      const s0 = String(expr ?? "").trim();
+      if (s0 === "") return 0;
+      if (s0.length > 200) return NaN;
+
+      let s = s0.replace(/,/g, ".").toLowerCase();
+      if (!/^[\d\s+\-*/().a-z,]+$/.test(s)) return NaN;
+
+      const tokens = [];
+        let i = 0;
+        while (i < s.length){
+          const ch = s[i];
+          if (ch === " " || ch === "\t" || ch === "\n" || ch === "\r"){ i++; continue; }
+
+          if ((ch >= "0" && ch <= "9") || ch === "."){
+            let j = i + 1;
+            while (j < s.length){
+              const c = s[j];
+              if ((c >= "0" && c <= "9") || c === ".") j++;
+              else break;
+            }
+            const numStr = s.slice(i, j);
+            const num = Number(numStr);
+            if (!Number.isFinite(num)) return NaN;
+            tokens.push({ t:"num", v:num });
+            i = j;
+            continue;
+          }
+
+          if ((ch >= "a" && ch <= "z")){
+            let j = i + 1;
+            while (j < s.length){
+              const c = s[j];
+              if ((c >= "a" && c <= "z")) j++;
+              else break;
+            }
+            const name = s.slice(i, j);
+            tokens.push({ t:"name", v:name });
+            i = j;
+            continue;
+          }
+
+          if ("+-*/(),".includes(ch)){
+            tokens.push({ t:"op", v:ch });
+            i++;
+            continue;
+          }
+          return NaN;
+        }
+
+        const allowedFns = new Set(["sqrt","abs","min","max","pow","round","floor","ceil"]);
+        const prec = { "+":1, "-":1, "*":2, "/":2, "u-":3 };
+        const assocRight = new Set(["u-"]);
+        const out = [];
+        const stack = [];
+
+        let prevType = "start";
+        for (let k=0;k<tokens.length;k++){
+          const tok = tokens[k];
+
+          if (tok.t === "num"){
+            out.push(tok);
+            prevType = "num";
+            continue;
+          }
+
+          if (tok.t === "name"){
+            if (!allowedFns.has(tok.v)) return NaN;
+            stack.push(tok);
+            prevType = "name";
+            continue;
+          }
+
+          const v = tok.v;
+
+          if (v === ","){
+            while (stack.length && stack[stack.length-1].v !== "("){
+              out.push(stack.pop());
+            }
+            if (!stack.length) return NaN;
+            prevType = "comma";
+            continue;
+          }
+
+          if (v === "("){
+            stack.push(tok);
+            prevType = "(";
+            continue;
+          }
+
+          if (v === ")"){
+            while (stack.length && stack[stack.length-1].v !== "("){
+              out.push(stack.pop());
+            }
+            if (!stack.length) return NaN;
+            stack.pop();
+            if (stack.length && stack[stack.length-1].t === "name"){
+              out.push(stack.pop());
+            }
+            prevType = ")";
+            continue;
+          }
+
+          if (v === "+" || v === "-" || v === "*" || v === "/"){
+            let op = v;
+            if (op === "-" && (prevType === "start" || prevType === "(" || prevType === "comma" || prevType === "op" || prevType === "name")){
+              op = "u-";
+            }
+            const opTok = { t:"op", v:op };
+
+            while (stack.length){
+              const top = stack[stack.length-1];
+              if (top.t === "op" && top.v !== "("){
+                const pTop = prec[top.v] ?? 0;
+                const pOp = prec[opTok.v] ?? 0;
+                const right = assocRight.has(opTok.v);
+                if ((right && pOp < pTop) || (!right && pOp <= pTop)){
+                  out.push(stack.pop());
+                  continue;
+                }
+              } else if (top.t === "name"){
+                out.push(stack.pop());
+                continue;
+              }
+              break;
+            }
+
+            stack.push(opTok);
+            prevType = "op";
+            continue;
+          }
+
+          return NaN;
+        }
+
+        while (stack.length){
+          const top = stack.pop();
+          if (top.v === "(") return NaN;
+          out.push(top);
+        }
+
+        const st = [];
+        function popNum(){
+          const x = st.pop();
+          return (typeof x === "number") ? x : NaN;
+        }
+
+        for (const t of out){
+          if (t.t === "num"){
+            st.push(t.v);
+            continue;
+          }
+          if (t.t === "op"){
+            if (t.v === "u-"){
+              const a = popNum();
+              if (!Number.isFinite(a)) return NaN;
+              const r = -a;
+              if (!Number.isFinite(r)) return NaN;
+              st.push(r);
+              continue;
+            }
+            const b = popNum();
+            const a = popNum();
+            if (!Number.isFinite(a) || !Number.isFinite(b)) return NaN;
+            let r = NaN;
+            if (t.v === "+") r = a + b;
+            else if (t.v === "-") r = a - b;
+            else if (t.v === "*") r = a * b;
+            else if (t.v === "/") r = a / b;
+            else return NaN;
+            if (!Number.isFinite(r)) return NaN;
+            st.push(r);
+            continue;
+          }
+          if (t.t === "name"){
+            const fn = t.v;
+            if (fn === "sqrt"){
+              const a = popNum(); if (!Number.isFinite(a)) return NaN;
+              const r = Math.sqrt(a); if (!Number.isFinite(r)) return NaN;
+              st.push(r);
+            } else if (fn === "abs"){
+              const a = popNum(); if (!Number.isFinite(a)) return NaN;
+              const r = Math.abs(a); if (!Number.isFinite(r)) return NaN;
+              st.push(r);
+            } else if (fn === "round"){
+              const a = popNum(); if (!Number.isFinite(a)) return NaN;
+              const r = Math.round(a); if (!Number.isFinite(r)) return NaN;
+              st.push(r);
+            } else if (fn === "floor"){
+              const a = popNum(); if (!Number.isFinite(a)) return NaN;
+              const r = Math.floor(a); if (!Number.isFinite(r)) return NaN;
+              st.push(r);
+            } else if (fn === "ceil"){
+              const a = popNum(); if (!Number.isFinite(a)) return NaN;
+              const r = Math.ceil(a); if (!Number.isFinite(r)) return NaN;
+              st.push(r);
+            } else if (fn === "min"){
+              const b = popNum(); const a = popNum();
+              if (!Number.isFinite(a) || !Number.isFinite(b)) return NaN;
+              const r = Math.min(a,b); if (!Number.isFinite(r)) return NaN;
+              st.push(r);
+            } else if (fn === "max"){
+              const b = popNum(); const a = popNum();
+              if (!Number.isFinite(a) || !Number.isFinite(b)) return NaN;
+              const r = Math.max(a,b); if (!Number.isFinite(r)) return NaN;
+              st.push(r);
+            } else if (fn === "pow"){
+              const b = popNum(); const a = popNum();
+              if (!Number.isFinite(a) || !Number.isFinite(b)) return NaN;
+              const r = Math.pow(a,b); if (!Number.isFinite(r)) return NaN;
+              st.push(r);
+            } else {
+              return NaN;
+            }
+            continue;
+          }
+          return NaN;
+        }
+
+        if (st.length !== 1) return NaN;
+        const val = st[0];
+        return Number.isFinite(val) ? Number(val) : NaN;
+      }
+    </script>
+  </body>
+</html>
